@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+
+<html dir="rtl">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!--
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.0/umd/popper.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.0/js/bootstrap.min.js"></script>-->
+
+    <link rel="stylesheet" href="https://cdn.rtlcss.com/bootstrap/v4.2.1/css/bootstrap.min.css"
+        integrity="sha384-vus3nQHTD+5mpDiZ4rkEPlnkcyTP+49BhJ4wJeJunw06ZAp+wzzeBPUXr42fi8If" crossorigin="anonymous">
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.0/umd/popper.min.js"></script>
+
+    <!--<script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"
+        integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo"
+        crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.6/umd/popper.min.js"
+        integrity="sha384-ZMP7rVo3mIykV+2+9J3UJ46jBk0WLaUAdn689aCwoqbBJiSnjAK/l8WvCWPIPm49"
+        crossorigin="anonymous"></script>-->
+
+    <script src="https://cdn.rtlcss.com/bootstrap/v4.2.1/js/bootstrap.min.js"
+        integrity="sha384-a9xOd0rz8w0J8zqj1qJic7GPFfyMfoiuDjC9rqXlVOcGO/dmRqzMn34gZYDTel8k"
+        crossorigin="anonymous"></script>
+
+    <script src="https://cdn.jsdelivr.net/npm/js-cookie@rc/dist/js.cookie.min.js"></script>
+
+
+    <script>
+
+        let token;
+
+        $(document).ready(() => {
+
+            if (Cookies.get("token")) {
+                token = Cookies.get("token");
+
+                $(".container").attr("hidden", false);
+
+                setInterval(() => {
+                    display_data();
+                }, 1000);
+
+            } else {
+
+                $("#set_user").modal({
+                    backdrop: 'static',
+                    keyboard: false
+                });
+            }
+        });
+
+        function exit() {
+            Cookies.remove("token");
+            location.reload();
+        }
+
+        function save_user_and_password() {
+
+            (async () => {
+
+                const user = $("#usr").val();
+                const pass = $("#pswrd").val();
+
+                const r = await set_token(user, pass).then();
+
+                if (!r) return;
+
+                $(".container").attr("hidden", false);
+
+                $("#set_user").modal("hide");
+
+                setInterval(() => {
+                    display_data();
+                }, 1000);
+
+            })();
+
+            return false;
+        }
+
+        function display_data() {
+
+            get_and_make_data().then((calls) => {
+
+                $("#ext tbody").html("");
+
+                calls.exts.forEach((v) => {
+
+                    const tr = $("<tr>").append(
+                        $("<td>").text(v.path).attr("id", "ext_name"),
+                        $("<td>").text(v.name),
+                        $("<strong>").append(
+                            $("<td>").text(v.count_calls)
+                        )
+                    );
+
+                    $("#ext tbody").append(tr);
+
+                    $("#sum_calls").text(calls.callsCount);
+                });
+
+                $("#calls tbody").html("");
+
+                calls.calls.forEach(element => {
+                    const tr = $("<tr>").append(
+                        $("<td>").text(element.callerIdNum),
+                        $("<td>").text(element.did),
+                        $("<td>").text(element.full_path.path),
+                        $("<td>").text(element.full_path.name),
+                        $("<td>").text(element.full_path.file),
+                        //$("<td>").text(element.transferFrom),
+                        $("<strong>").append(
+                            $("<td>").text(format_time(element.duration))
+                        )
+                    );
+
+                    $("#calls tbody").append(tr);
+
+                });
+            });
+        }
+
+        async function set_token(user, pass) {
+            const r = await $.getJSON(
+                "https://www.call2all.co.il/ym/api/Login" +
+                "?" + "username=" + user +
+                "&" + "password=" + pass);
+
+            if (r.responseStatus !== "OK") {
+
+                $("#alert").text(r.message);
+                $("#alert").attr("hidden", false);
+                return false;
+            }
+            token = r.token;
+            Cookies.set("token", token);
+            return true;
+        }
+
+        async function get_and_make_data() {
+            const calls = await $.getJSON("https://www.call2all.co.il/ym/api/GetIncomingCalls?" + "token=" + token);
+
+            calls.calls.map((v) => {
+                v.full_path = get_path(v.path);
+                return v;
+            });
+
+            let exts = {};
+
+            for (const iterator of calls.calls) {
+                if (iterator.path) {
+                    const path = iterator.full_path.path;
+
+                    if (exts[path]) {
+                        exts[path].v = exts[path].v + 1;
+                    } else {
+                        exts[path] = { v: 1, name: iterator.full_path.name };
+                    }
+                }
+            }
+
+            exts = Object.entries(exts);
+
+            exts = exts.map((v) => {
+                return { path: v[0], name: v[1].name, count_calls: v[1].v };
+            });
+
+            exts.sort((a, b) => {
+                return b.count_calls - a.count_calls;
+            })
+
+            calls.exts = exts;
+
+            return calls;
+        }
+
+        function get_path(path_str) {
+
+            if (!path_str) return false;
+
+            const path_split = path_str.split(" ");
+
+            const r = {
+                original: path_split
+            };
+
+            if (path_split.length > 2) {
+
+                r.path = path_split[1];
+                r.name = path_split[2];
+                r.file = path_split[4];
+
+
+            } else if (path_split.length === 2) {
+                r.path = path_split[0];
+                r.name = path_split[1];
+            } else if (path_split.length === 1) {
+                r.path = path_split[0];
+            }
+
+            return r;
+        }
+
+        function format_time(duration) {
+            var sec = '' + duration % 60;
+            if (sec.length < 2) sec = "0" + sec;
+            return Math.floor(duration / 60) + ":" + sec;
+        };
+    </script>
+
+    <style>
+
+        :root {
+            --shakuf: rgba(255, 255, 255, 0.65);
+        }
+
+        .header0 {
+            padding: 2rem;
+            margin-bottom: 2rem;
+            border-radius: 0 0 3rem 3rem;
+            backdrop-filter: blur(10px);
+            background-color: var(--shakuf);
+        }
+        div .card1 {
+            padding: 2rem;
+            border-radius: 3rem;
+            margin-bottom: 2rem;
+            backdrop-filter: blur(10px);
+            background-color: var(--shakuf);;
+        }
+
+        #ext_name {
+            text-align: left;
+        }
+
+        .block_size {
+            overflow-y: auto;
+            height: 20rem;
+            display: block;
+        }
+
+        #img {
+            background-image: url(https://www.galitz.co.il/wp-content/uploads/2014/12/3-e1447332374628.jpg);
+            height: 100%;
+            width: 100%;
+            position: fixed;
+            z-index: -1;
+            background-size: cover;
+            background-position: center;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="img"></div>
+    <div class="container" hidden="true">
+        <div class="header0 text-center">
+            <h1>שיחות נכנסות</h1>
+
+            <button onclick="exit()" class="btn btn-primary">יציאה</button>
+
+        </div>
+
+        <div class="">
+
+            <div class="card1">
+                <h2 class="text-center">סך הכל שיחות: <strong><span id="sum_calls">0</span></strong></h1>
+            </div>
+
+            <div id="ext" class="card1">
+                <div class="block_size">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>שלוחה</th>
+                                <th>שם השלוחה</th>
+                                <th>כמות נכנסים</th>
+                            </tr>
+                        </thead>
+
+                        <tbody></tbody>
+
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="card1">
+            <div class="block_size">
+                <table class="table table-striped" id="calls">
+                    <thead>
+                        <tr>
+                            <th>טלפון</th>
+                            <th>חייג למספר</th>
+                            <th>שלוחה</th>
+                            <th>שם שלוחה</th>
+                            <th>קובץ מספר</th>
+                            <!--<th>מועבר מ</th>-->
+                            <th>זמן</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="set_user">
+        <div class="modal-dialog">
+            <div class="modal-content">
+
+                <div class="modal-header">
+                    <h4 class="modal-title">פרטי מערכת</h4>
+                    <!--<button type="button" class="close" data-dismiss="modal">&times;</button>-->
+                </div>
+
+                <div class="modal-body">
+                    <div class="alert alert-danger" hidden="true" id="alert">
+                    </div>
+
+                    <p>אנא הקש את שם המשתמש והסיסמא של המערכת.</p>
+
+                    <form onsubmit="return save_user_and_password();">
+
+                        <div class="form-group"><input id="usr" type="text" class="form-control" placeholder="Username"
+                                required></div>
+
+                        <div class="form-group"><input id="pswrd" type="password" class="form-control"
+                                placeholder="Password" required></div>
+
+                        <div class="modal-footer">
+                            <button type="submit" class="btn btn-primary">שמור</button>
+                        </div>
+
+                    </form>
+
+                </div>
+            </div>
+        </div>
+</body>
+
+</html>
