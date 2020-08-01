@@ -45,20 +45,6 @@
         $(document).ready(() => {
 
             chart = Highcharts.stockChart('container', {
-                chart: {
-                    events: {
-                        /* load: function () {
-
-                            // set up the updating of the chart each second
-                            var series = this.series[0];
-                            setInterval(function () {
-                                var x = (new Date()).getTime(), // current time
-                                    y = Math.round(Math.random() * 100);
-                                series.addPoint([x, y], true, true);
-                            }, 1000);
-                        } */
-                    }
-                },
 
                 time: {
                     useUTC: false
@@ -82,7 +68,7 @@
                 },
 
                 title: {
-                    text: 'Live random data'
+                    text: 'גרף שיחות נכנסות'
                 },
 
                 exporting: {
@@ -196,8 +182,10 @@
 
                 $("#alert").text(r.message);
                 $("#alert").attr("hidden", false);
+                $("#pswrd").val("");
                 return false;
             }
+
             token = r.token;
             Cookies.set("token", token);
             return true;
@@ -205,6 +193,10 @@
 
         async function get_and_make_data() {
             const calls = await $.getJSON("https://www.call2all.co.il/ym/api/GetIncomingCalls?" + "token=" + token);
+
+            if(calls.responseStatus !== "OK") {
+                exit();
+            }
 
             calls.calls.map((v) => {
                 v.full_path = get_path(v.path);
