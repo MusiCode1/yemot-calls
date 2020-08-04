@@ -44,6 +44,26 @@
         let history_calls = [];
 
         $(document).ready(() => {
+            Highcharts.setOptions({
+                lang: {
+                    months: [
+                        'ינואר', 'פברואר', 'מרץ', 'אפריל',
+                        'מאי', 'יוני', 'יולי', 'אוגוסט',
+                        'ספטמבר', 'אוקטובר', 'נובמבר', 'דצבר'
+                    ],
+                    weekdays: [
+                        'ראשון', 'שני', 'שלישי', 'רביעי',   
+                        'חמישי', 'שישי', 'שבת'
+                    ],
+                    shortMonths: [
+                        "ינו", "פבר", "מרץ", 
+                        "אפר", "מאי", "יונ", 
+                        "יול", "אוג", "ספט", 
+                        "אוק", "נוב", "דצמ"
+                    ]
+                    
+                }
+            });
 
             chart = Highcharts.stockChart('container', {
 
@@ -360,7 +380,7 @@
 
         <div class="card1">
             <div class="block_size">
-                <table class="table table-striped" id="calls">
+                <table class="table table-striped" id="">
                     <thead>
                         <tr>
                             <th>טלפון</th>
