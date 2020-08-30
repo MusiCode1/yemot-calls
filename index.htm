@@ -5,6 +5,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>רשימת שיחות נכנסות</title>
     <!--
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css">
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
@@ -43,6 +44,26 @@
         let history_calls = [];
 
         $(document).ready(() => {
+            Highcharts.setOptions({
+                lang: {
+                    months: [
+                        'ינואר', 'פברואר', 'מרץ', 'אפריל',
+                        'מאי', 'יוני', 'יולי', 'אוגוסט',
+                        'ספטמבר', 'אוקטובר', 'נובמבר', 'דצבר'
+                    ],
+                    weekdays: [
+                        'ראשון', 'שני', 'שלישי', 'רביעי',   
+                        'חמישי', 'שישי', 'שבת'
+                    ],
+                    shortMonths: [
+                        "ינו", "פבר", "מרץ", 
+                        "אפר", "מאי", "יונ", 
+                        "יול", "אוג", "ספט", 
+                        "אוק", "נוב", "דצמ"
+                    ]
+                    
+                }
+            });
 
             chart = Highcharts.stockChart('container', {
 
@@ -61,7 +82,7 @@
                         text: '5M'
                     }, {
                         type: 'all',
-                        text: 'All'
+                        text: 'הכל'
                     }],
                     inputEnabled: false,
                     selected: 2
@@ -76,7 +97,7 @@
                 },
 
                 series: [{
-                    name: 'Random data',
+                    name: 'מספר שיחות',
                     data: [
                     ]
                 }]
@@ -305,7 +326,7 @@
         }
 
         #img {
-            background-image: url(https://www.galitz.co.il/wp-content/uploads/2014/12/3-e1447332374628.jpg);
+            background-image: url(background.jpg);
             height: 100%;
             width: 100%;
             position: fixed;
@@ -359,7 +380,7 @@
 
         <div class="card1">
             <div class="block_size">
-                <table class="table table-striped" id="calls">
+                <table class="table table-striped" id="">
                     <thead>
                         <tr>
                             <th>טלפון</th>
@@ -395,14 +416,14 @@
 
                     <form onsubmit="return save_user_and_password();">
 
-                        <div class="form-group"><input id="usr" type="text" class="form-control" placeholder="Username"
+                        <div class="form-group"><input id="usr" type="text" class="form-control" placeholder="מספר מערכת"
                                 required></div>
 
                         <div class="form-group"><input id="pswrd" type="password" class="form-control"
-                                placeholder="Password" required></div>
+                                placeholder="סיסמא" required></div>
 
                         <div class="modal-footer">
-                            <button type="submit" class="btn btn-primary">שמור</button>
+                            <button type="submit" class="btn btn-primary">כניסה</button>
                         </div>
 
                     </form>
